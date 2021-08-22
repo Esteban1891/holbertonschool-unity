@@ -16,4 +16,4 @@ This repository contains example projects using c# programming languages. In the
 
 ## Author
 ### esteban "Esteban1891" 
- Twitter: [@alzheimeer](https://twitter.com/Esteban18911) Linkedin: [esteban](https://www.linkedin.com/in/estebandelahoz)
+ Twitter: [@Esteban18911](https://twitter.com/Esteban18911) Linkedin: [esteban](https://www.linkedin.com/in/estebandelahoz)
