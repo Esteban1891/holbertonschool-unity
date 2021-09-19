@@ -1,18 +1,20 @@
-﻿using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 
 public class WinTrigger : MonoBehaviour
 {
-    public Text timerText;
-    public GameObject player;
-
+    public GameObject player, winTrigger;
+    public Text timer;
     void OnTriggerEnter(Collider other)
     {
-        player.GetComponent<Timer>().enabled = false;
-        //timerText.text = string.Format("{0:0}:{1:00}.{2:00}", timer / 60, timer % 60, timer * 100 % 100);
-        timerText.fontSize = 36;
-        timerText.color = Color.green;
+        if (other.GetComponent<Collider>().tag == "Player")
+        {
+            Text textPosition = timer.GetComponent<Text>();
+            textPosition.transform.position += new Vector3(0, -10f, 0);
+            timer.color = Color.green;
+            timer.fontSize = 100;
+            player.GetComponent<Timer>().enabled = false;
+            winTrigger.GetComponent<Collider>().enabled = false;
+        }
     }
 }

@@ -1,96 +1,104 @@
-﻿using UnityEngine;
+using System.Threading;
+using System.Collections;
+using System.Collections.Generic;
+using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
-using System.Collections;
 
 public class PlayerController : MonoBehaviour
 {
-    public Rigidbody rb;
-    public Joystick joystick;
-    public float speed = 2000f;
-    private int score = 0;
+    public float speed = 500f;
     public int health = 5;
+    private int score = 0;
     public Text scoreText;
     public Text healthText;
     public Text winLoseText;
-    public Image winLoseBG;
-    void SetHealthText()
+    public Image winLoseImage;
+    Rigidbody rb;
+
+    // Start is called before the first frame update
+    void Start()
     {
-        healthText.text = "Health: " + health.ToString();
+        rb = GetComponent<Rigidbody>();
+    }
+
+    // Update is called once per frame
+    void FixedUpdate()
+    {
+        float xMove = Input.GetAxisRaw("Horizontal");
+        float zMove = Input.GetAxisRaw("Vertical");
+        rb.velocity = new Vector3(xMove, 0, zMove) * speed * Time.deltaTime;
+    }
+
+    void Update()
+    {
+        if (health == 0)
+        {
+            winLoseImage.gameObject.SetActive(true);
+            winLoseText.text = "Game Over!";
+            speed = 0f;
+            StartCoroutine(GameOver(3));
+        }
+        if (Input.GetKey(KeyCode.Escape))
+        {
+            SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex - 1);
+        }
+    }
+
+    void OnTriggerEnter(Collider other)
+    {
+        if (other.GetComponent<Collider>().tag == "Pickup")
+        {
+            score++;
+            speed += 50f;
+            SetScoreText();
+            Destroy(other.gameObject);
+        }
+        if (other.GetComponent<Collider>().tag == "Trap")
+        {
+            health--;
+            SetHealthText();
+        }
+        if (other.GetComponent<Collider>().tag == "Goal")
+        {
+            if (score > 20)
+            {
+                winLoseImage.gameObject.SetActive(true);
+                winLoseImage.color = Color.green;
+                winLoseText.color = Color.black;
+                winLoseText.text = "You Win!";
+                speed = 0f;
+                StartCoroutine(GameOver(3));
+            }
+            else
+            {
+                StartCoroutine(ChekNumCoins(1.5f));
+            }
+        }
     }
 
     void SetScoreText()
     {
-        scoreText.text = "Score: " + score.ToString();
+        scoreText.text = $"Score: {score}";
     }
-    void Update()
-    {
-        if (Input.GetKey(KeyCode.Escape))
-        {
-            SceneManager.LoadScene(0);
-        }
 
-        if (health == 0)
-        {
-            winLoseBG.gameObject.SetActive(true);
-            winLoseText.color = Color.white;
-            winLoseBG.color = Color.red;
-            winLoseText.text = "Game Over!";
-            StartCoroutine(LoadScene(3));
-            //Debug.Log("Game Over!");
-            
-        }
-    }
-        // Update is called once per frame
-    void FixedUpdate ()
+    void SetHealthText()
     {
-        
-        if (Input.GetKey("d") || Input.GetKey(KeyCode.RightArrow) || joystick.Horizontal >= .2f)
-        {
-            rb.AddForce(speed * Time.deltaTime, 0, 0);
-        }
-        if (Input.GetKey("a") || Input.GetKey(KeyCode.LeftArrow) || joystick.Horizontal <= -.2f)
-        {
-            rb.AddForce(-speed * Time.deltaTime, 0, 0);
-        }
-        if (Input.GetKey("w") || Input.GetKey(KeyCode.UpArrow) || joystick.Vertical >= .2f)
-        {
-            rb.AddForce(0, 0, speed * Time.deltaTime);
-        }
-        if (Input.GetKey("s") || Input.GetKey(KeyCode.DownArrow) || joystick.Vertical <= -.2f)
-        {
-            rb.AddForce(0, 0, -speed * Time.deltaTime);
-        }
+        healthText.text = $"Health: {health}";
     }
-    IEnumerator LoadScene(float seconds)
-    {
-        yield return new WaitForSeconds(seconds);
-        SceneManager.LoadScene(0);
-    }
-    void OnTriggerEnter(Collider other)
-    {
-        if (other.gameObject.CompareTag("Pickup"))
-        {
-            other.gameObject.SetActive(false);
-            score++;
-            SetScoreText();
-            //Debug.Log("Score: " + score.ToString());
-        }
-        if (other.gameObject.CompareTag("Trap"))
-        {
-            health--;
-            SetHealthText();
-            //Debug.Log("Health: " + health.ToString());
-        }
-        if (other.gameObject.CompareTag("Goal"))
-        {
-            winLoseBG.gameObject.SetActive(true);
-            winLoseText.color = Color.black;
-            winLoseBG.color = Color.green;
-            winLoseText.text = "You win!";
-            StartCoroutine(LoadScene(3));
-            //Debug.Log("You win!");
-        }
-    }
- }
 
+    private IEnumerator ChekNumCoins(float delay)
+    {
+        winLoseImage.gameObject.SetActive(true);
+        winLoseText.text = "Still missing coins!";
+        yield return new WaitForSeconds(delay);
+        winLoseImage.gameObject.SetActive(false);
+
+    }
+
+    private IEnumerator GameOver(float delay)
+    {
+        yield return new WaitForSeconds(delay);
+        SceneManager.LoadScene(SceneManager.GetActiveScene().name);
+    }
+}
