@@ -1,38 +1,25 @@
-﻿using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 
 public class CutsceneController : MonoBehaviour
 {
-    // Start is called before the first frame update
     Animator anim;
-    public GameObject mainCam;
-    public GameObject sCam;
-    public GameObject player;
-    public GameObject timerCanvas;
+    public GameObject player, timerCanvas, mainCamera;
 
-    void Awake()
+    void Start()
     {
-        Debug.Log("awake de cutscenecontroller");
         anim = GetComponent<Animator>();
-        
     }
 
     void Update()
     {
-
-        if (transform.position == new Vector3(0f, 2.5f, -6.25f))
+        if (transform.position == new Vector3(0, 2.5f, -6.25f))
         {
-            Debug.Log("finaliza animacion");
-            mainCam.SetActive(true);
-            sCam.SetActive(false);
-            player.SetActive(true);
+            player.GetComponent<PlayerController>().enabled = true;
+            player.GetComponent<AudioListener>().enabled = true;
             timerCanvas.SetActive(true);
-            player.gameObject.GetComponent<PlayerController>().enabled = true;
+            mainCamera.SetActive(true);
+            this.gameObject.SetActive(false);
         }
-            Debug.Log("update de cutscenecontroller");
     }
-
-   
 
 }

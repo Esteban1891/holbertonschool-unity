@@ -1,68 +1,58 @@
-﻿using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.Audio;
 using UnityEngine.SceneManagement;
 
 public class PauseMenu : MonoBehaviour
 {
-    public GameObject PauseCanvas;
-    public bool PausedGame = false;
-    
-    // MainMenu MainMenuScript;
-
-    // MainMenuScript = gameObject.GetComponent<MainMenu>();
-
-    void Update() 
+    public GameObject pauseCanvas;
+    public AudioMixerSnapshot paused, normal;
+    bool isPaused = false;
+    void Update()
     {
-         Debug.Log("update de pause Menu");
         if (Input.GetKeyDown(KeyCode.Escape))
         {
-            Debug.Log("escape");
-
-            if (PausedGame)
-            {
-                Debug.Log("resume");
+            if (isPaused)
                 Resume();
-                
-            }
             else
-            {
-                Debug.Log("pause");
                 Pause();
-                
-            }
         }
     }
+
     public void Pause()
     {
-        Debug.Log("inpause");
-        PauseCanvas.SetActive(true);
+        PlayerPrefs.SetInt("paused", 1);
+        pauseCanvas.SetActive(true);
         Time.timeScale = 0f;
-        PausedGame = true;
+        isPaused = true;
+        paused.TransitionTo(0);
     }
+
     public void Resume()
     {
-        Debug.Log("inresume");
-        PauseCanvas.SetActive(false);
+        PlayerPrefs.SetInt("paused", 0);
+        pauseCanvas.SetActive(false);
         Time.timeScale = 1f;
-        PausedGame = false;
+        isPaused = false;
+        normal.TransitionTo(0);
     }
+
     public void Restart()
     {
         Time.timeScale = 1f;
         SceneManager.LoadScene(SceneManager.GetActiveScene().name);
     }
+
     public void MainMenu()
     {
+        normal.TransitionTo(0);
         Time.timeScale = 1f;
         SceneManager.LoadScene("MainMenu");
     }
+
     public void Options()
     {
         Time.timeScale = 1f;
-        PlayerPrefs.SetString("lastScene", SceneManager.GetActiveScene().name);
-        // MainMenuScript.PreviousScene();
+        PlayerPrefs.SetString("previousScene", SceneManager.GetActiveScene().name);
         SceneManager.LoadScene("Options");
     }
-
 }

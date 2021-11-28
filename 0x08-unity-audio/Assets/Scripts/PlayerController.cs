@@ -1,109 +1,102 @@
-﻿using UnityEngine;
+using UnityEngine;
 using UnityEngine.Audio;
+using UnityEngine.InputSystem;
+using Cinemachine;
 
 public class PlayerController : MonoBehaviour
 {
-
-
-    //CharacterController.Move
+    private InputMaster inputMaster;
     public CharacterController controller;
-    public float speed = 6f;
-    private float jumpSpeed = 9f;
-    public float gravity = 18f;
-    private Vector3 moveDirection = Vector3.zero;
-    public GameObject reference;
+    public Transform cam, groundCheck;
+    public float groundDistance = 0.1f;
+    public LayerMask groundMask; // Sphere that collides with the ground
+    public float speed = 6f, gravity = -19.62f, turnSmoothTime = 0.1f, jumpHeight = 3f;
+    public bool isInverted = false, isGrounded; // Stores if the player is grounded
+    public AudioSource grass, bgm, victory;
+    float turnSmoothVelocity; // Smooth movement of the camera
+    Vector3 startPos = new Vector3(0f, 20f, 0f), velocity; // velocity helps with gravity;
+    int coins;
 
-
-    public float rotateSpeed = 60;
-    
-    Vector3 velocity;
-    private Vector3 startPosition;
-    Transform cam;
-    public float turnSmoothTime = 0.1f;
-    float turnSmoothVelocity;
-
-    Animator anim;
-
-    public AudioSource audioSource;
-
-    private void Start()
+    void Awake ()
     {
-        anim = GetComponentInChildren<Animator>();
-        controller = GetComponent<CharacterController>();
-        cam = GetComponent<Transform>();
-        startPosition = cam.position;
-        audioSource = GetComponent<AudioSource>();
+        inputMaster = new InputMaster();
+        bgm.Play();
     }
-    private void Update()
+
+    private void OnEnable()
     {
-        float horizontal = Input.GetAxisRaw("Horizontal");
-        float vertical = Input.GetAxisRaw("Vertical");
+        inputMaster.Enable();
+    }
+    private void OnDisable()
+    {
+        inputMaster.Disable();
+    }
 
-
-
-        if (controller.isGrounded)
-        {
-            //Control  of animations
-            Debug.Log("TIERRA ON");
-            anim.SetBool("ground",true);
-            anim.SetBool("falling",false);
-            anim.SetBool("Run", false);
-
-            //movement and change of exes with camera and mouse
-           
-            moveDirection = new Vector3(horizontal, 0, vertical);
-            moveDirection = transform.TransformDirection(moveDirection);
-            Quaternion target = Quaternion.Euler(horizontal, reference.transform.eulerAngles.y, vertical) ;
-            transform.rotation = Quaternion.Slerp(transform.rotation, target, Time.deltaTime * rotateSpeed);
-            
-
-
-            if (horizontal != 0 || vertical != 0)
-            {
-                if (Input.GetButtonDown("Jump"))
-                {
-                    moveDirection.x *= speed / 1.5f;
-                    moveDirection.z *= speed / 1.5f;
-                    moveDirection.y = jumpSpeed;
-                    anim.SetTrigger("Jump");
-                }
-                else {
-                    moveDirection.x *= speed;
-                    moveDirection.z *= speed;
-                }
-                anim.SetBool("Run", true);
-                
-            }
-            else
-            {
-                if (Input.GetButtonDown("Jump"))
-                {
-                    moveDirection.y = jumpSpeed;
-                    anim.SetTrigger("Jump");
-                }
-                anim.SetBool("Run", false);
-            }
-                
-
-            
-        }
+    void Update()
+    {
+        if (PlayerPrefs.GetInt("paused") == 0 || Time.timeScale == 0)
+            Cursor.visible = false;
         else
-        {
-                anim.SetBool("ground", false);
-        }
-        
-        moveDirection.y -= gravity * Time.deltaTime;
-        controller.Move(moveDirection * Time.deltaTime);
+            Cursor.visible = true;
 
+        isGrounded = Physics.CheckSphere(groundCheck.position, groundDistance, groundMask); // Checks if player is on the ground
+        if (isGrounded && velocity.y < 0)
+            velocity.y = -9.81f;
 
-        //if fall restart from sky
-        if (cam.position.y < -20)
+        Vector2 movement = inputMaster.Player.Move.ReadValue<Vector2>();
+        Vector3 move = new Vector3(movement.x, 0f, movement.y).normalized;
+        if (move.magnitude >= 0.1f) // Move
         {
-            anim.SetBool("ground", false);
-            anim.SetBool("falling", true);
-            anim.SetBool("Run", false);
-            cam.position = new Vector3(startPosition.x, startPosition.y + 15, startPosition.z);
+            if (!grass.isPlaying && isGrounded)
+                grass.Play();
+            float targetAngle = Mathf.Atan2(move.x, move.z) * Mathf.Rad2Deg + cam.eulerAngles.y;
+            float angle = Mathf.SmoothDampAngle(transform.eulerAngles.y, targetAngle, ref turnSmoothVelocity, turnSmoothTime);
+            transform.rotation = Quaternion.Euler(0f, angle, 0f);
+
+            Vector3 moveDir = Quaternion.Euler(0f, targetAngle, 0f) * Vector3.forward;
+            controller.Move(moveDir.normalized * speed * Time.deltaTime);
         }
-        
-    }    
+        if (move.magnitude >= 0.1f && !isGrounded || move.magnitude == 0)
+            grass.Stop();
+        if (inputMaster.Player.Jump.triggered && isGrounded)
+        {
+            if (grass.isPlaying)
+                grass.Stop();
+            velocity.y = Mathf.Sqrt(jumpHeight * -2f * gravity);
+        }
+        velocity.y += gravity * Time.deltaTime;
+        controller.Move(velocity * Time.deltaTime); // Jumps
+
+        if (transform.position.y < -40) // Reset position
+        {
+            this.gameObject.GetComponent<CharacterController>().enabled = false;
+            this.gameObject.transform.position = new Vector3(0, 20, 0);
+            velocity.y = -9.81f;
+            this.gameObject.GetComponent<CharacterController>().enabled = true;
+
+        }
+        if (coins == 8)
+        {
+            GameObject.Find("Plat (16)").transform.localScale = new Vector3 (4, 1, 1);
+            GameObject.Find("Instruction").GetComponent<TextMesh>().text = "Well done!";
+            GameObject.Find("TextPumpkin").SetActive(false);
+            coins++;
+        }
+    }
+
+    void OnTriggerEnter(Collider other)
+    {
+        if (other.CompareTag("Coin"))
+        {
+            coins++;
+            Debug.Log(coins);
+            other.gameObject.SetActive(false);
+        }
+        if (other.name == "WinFlag")
+        {
+            bgm.Pause();
+            victory.Play();
+            Cursor.visible = true;
+        }
+    }
 }

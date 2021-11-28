@@ -1,92 +1,53 @@
-﻿using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 using UnityEngine.Audio;
 
-
 public class OptionsMenu : MonoBehaviour
 {
+    public Toggle yAxis;
+    public Slider bgm, sfx;
+    public AudioMixer masterMixer;
+    public AudioMixerSnapshot normal;
+    float bgmVolume = 1f, sfxVolume = 1f;
 
-    public Toggle inverted;
-
-    private static readonly string FirstPlay = "FirstPlay";
-    private static readonly string bgmPref = "bgmPref";
-    private static readonly string sfxPref = "sfxPref";
-    private int firstPlayInt;
-    public Slider sfxSlider, bgmSlider;
-    private float sfxFloat, bgmFloat;
-    public AudioSource bgmAudio;
-    public AudioSource[] sfxAudio;
-
-    private void Start()
+    void Start()
     {
-        firstPlayInt = PlayerPrefs.GetInt(FirstPlay);
+        normal.TransitionTo(0);
+        if (yAxis != null)
+            yAxis.isOn = PlayerPrefs.GetInt("invertY") == 0 ? false : true;
+        bgm.value = PlayerPrefs.GetFloat("bgmVolume");
+        sfx.value = PlayerPrefs.GetFloat("sfxVolume");
+    }
+    void Update()
+    {
 
-        if (firstPlayInt == 0)
-        {
-            bgmFloat = .25f;
-            sfxFloat = .75f;
-            bgmSlider.value = bgmFloat;
-            sfxSlider.value = sfxFloat;
-            PlayerPrefs.SetFloat(bgmPref, bgmFloat);
-            PlayerPrefs.SetFloat(sfxPref, sfxFloat);
-            PlayerPrefs.SetInt(FirstPlay, -1);
-        }
-        else
-        {
-
-            bgmFloat = PlayerPrefs.GetFloat(bgmPref);
-            bgmSlider.value = bgmFloat;
-           
-            sfxFloat = PlayerPrefs.GetFloat(sfxPref);
-            sfxSlider.value = sfxFloat;
-        }
-
-
-        if (PlayerPrefs.GetString("Inverted") != "")
-        {
-            inverted.isOn = bool.Parse(PlayerPrefs.GetString("Inverted"));
-        }
+        Cursor.visible = true;
+        masterMixer.SetFloat("volumeBGM", ToDecibel(bgmVolume));
+        masterMixer.SetFloat("volumeSFX", ToDecibel(sfxVolume));
     }
 
-    public void SaveSoundSetting()
-    {
-        PlayerPrefs.SetFloat(bgmPref, bgmSlider.value);
-        PlayerPrefs.SetFloat(sfxPref, sfxSlider.value);
-    }
-
-
-    public void OnApplicationFocus(bool infocus)
-    {
-        if(!infocus)
-        {
-            SaveSoundSetting();
-        }
-    }
+    public void UpdateBGMVolume(float vol) => bgmVolume = vol;
+    public void UpdateSFXVolume(float vol) => sfxVolume = vol;
 
     public void Back()
     {
-        SceneManager.LoadScene("MainMenu");
+        normal.TransitionTo(0);
+        SceneManager.LoadScene(PlayerPrefs.GetString("previousScene"));
     }
 
     public void Apply()
     {
-        Debug.Log("ApplySettings");
-        PlayerPrefs.SetString("Inverted", inverted.isOn.ToString());
-        SaveSoundSetting();
-
+        PlayerPrefs.SetInt("invertY", yAxis.isOn == false ? 0 : 1);
+        PlayerPrefs.SetFloat("bgmVolume", bgmVolume);
+        PlayerPrefs.SetFloat("sfxVolume", sfxVolume);
     }
 
-
-    public void UpdateSound()
+    float ToDecibel(float n)
     {
-        Debug.Log("UpdateSoundSettings");
-        bgmAudio.volume = bgmSlider.value;
-        for (int i = 0; i < sfxAudio.Length; i++)
-        {
-            sfxAudio[i].volume = sfxSlider.value;
-        }
+        float dB;
+        dB = n != 0 ? 20.0f * Mathf.Log10(n) : -144.0f;
+
+        return dB;
     }
 }

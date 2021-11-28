@@ -1,45 +1,19 @@
-﻿using UnityEngine;
-using UnityEngine.UI;
+using UnityEngine;
+using Cinemachine;
 
 public class CameraController : MonoBehaviour
 {
-    
-    private Vector3 offset;
+    public CinemachineFreeLook cam;
 
-    public GameObject player;
-    public float turnSpeed = 5.0f;
-
-    public Toggle InvertedYMode;
-    public bool isInverted = false;
-    private int inverted;
-
-    // Start is called before the first frame update
-    void Start()
-    {
-        if (InvertedYMode)
-            isInverted = true;
-        offset = transform.position - player.transform.position;
-    }
-
-    // Update is called once per frame
     void Update()
     {
-        if (isInverted)
-                    inverted = -1;
-        else
-                    inverted = 1;
-        //If tap button rigth of mouse is actived rotation
-        if(Input.GetMouseButton(1))
+        if (PlayerPrefs.GetInt("invertY") == 0)
         {
-            Debug.Log("Active Rotation");
-        offset = Quaternion.AngleAxis(Input.GetAxis("Mouse X") * turnSpeed, Vector3.up) * Quaternion.AngleAxis((Input.GetAxis("Mouse Y") * inverted) * turnSpeed, Vector3.left) * offset;
-        transform.position = player.transform.position + offset;
-        transform.LookAt(player.transform.position);
+            cam.m_YAxis.m_InvertInput = false;
         }
         else
         {
-            Debug.Log("Desactive Rotation");
-            transform.position = player.transform.position + offset;
+            cam.m_YAxis.m_InvertInput = true;
         }
     }
 }

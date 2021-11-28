@@ -1,3 +1,1 @@
-### AR Business Card
-
-![](Screenshot_2.png)
+# 0x09. Unity - AR Business Card

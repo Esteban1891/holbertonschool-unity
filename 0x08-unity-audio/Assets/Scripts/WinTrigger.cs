@@ -1,24 +1,24 @@
-﻿using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 
 public class WinTrigger : MonoBehaviour
 {
-    public Text timerText;
-    public GameObject player;
-    public GameObject winCanvas;
-    public AudioSource bgm;
-    public AudioSource winPiano;
+    public GameObject player, winTrigger, winCanvas;
+    public Text timer, winText;
+
     void OnTriggerEnter(Collider other)
     {
-        player.GetComponent<Timer>().enabled = false;
-        //timerText.text = string.Format("{0:0}:{1:00}.{2:00}", timer / 60, timer % 60, timer * 100 % 100);
-        timerText.fontSize = 36;
-        timerText.color = Color.green;
-        winCanvas.SetActive(true);
-        bgm.enabled = false;
-        winPiano.enabled = true;
-
+        if (other.GetComponent<Collider>().tag == "Player")
+        {
+            Cursor.visible = true;
+            Text textPosition = timer.GetComponent<Text>();
+            player.GetComponent<Timer>().enabled = false;
+            winTrigger.GetComponent<Collider>().enabled = false;
+            winText.text = textPosition.text;
+            textPosition.enabled = false;
+            winCanvas.SetActive(true);
+            player.GetComponent<PauseMenu>().enabled = false;
+            Time.timeScale = 0f;
+        }
     }
 }

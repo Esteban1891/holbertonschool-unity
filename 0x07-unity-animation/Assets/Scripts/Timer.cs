@@ -1,15 +1,21 @@
-﻿using UnityEngine;
+using UnityEngine;
 using UnityEngine.UI;
+using System;
 
 public class Timer : MonoBehaviour
 {
     public Text timerText;
-    private float timer = 0.0f;
-    
+    float currentTime;
+    void Start()
+    {
+        currentTime = 0f;
+    }
+
     void Update()
     {
-            timer += Time.deltaTime;
-            timerText.text = string.Format("{0:0}:{1:00}.{2:00}", timer / 60, timer % 60, timer * 100 % 100);
+        TimeSpan time = TimeSpan.FromSeconds(currentTime);
+        currentTime += 1 * Time.deltaTime;
+        //timerText.text = time.Minutes.ToString() + ":" + time.Seconds.ToString() + "." + time.Milliseconds.ToString();
+        timerText.text = time.ToString(@"mm\:ss\.ff");
     }
-    
 }
